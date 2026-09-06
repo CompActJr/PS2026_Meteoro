@@ -3,7 +3,7 @@ import equipeDiretoria from "./image/Equipe_Diretoria.jpeg";
 import logoBranco from "./image/Logo Branco com Frase.png";
 import magaOficial from "./image/magá SEM FUNDO(3).png";
 import mapaMundi from "./image/mapa mundi com navio.png";
-
+import VLibras from './VLibras'
 /* ── Brand tokens ── */
 const B = {
   navy: "#01113d",
@@ -106,7 +106,7 @@ function Nav() {
         </a>
 
         {/* Mobile burger */}
-        <button className="md:hidden p-2" style={{ color: B.silver }} onClick={() => setOpen(v => !v)}>
+        <button className="md:hidden p-2" style={{ color: B.silver }} onClick={() => setOpen(v => !v)} aria-label="menu hambúrguer">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             {open
               ? <><path d="M18 6L6 18" /><path d="M6 6l12 12" /></>
@@ -913,9 +913,9 @@ function Contact() {
                     <input className="form-input w-full px-4 py-3 rounded text-sm" placeholder="+55 (11) 00000-0000" value={form.telefone} onChange={set("telefone")} />
                   </div>
                   <div>
-                    <label className="text-xs mb-1.5 block" style={{ color: B.silver }}>Assunto *</label>
-                    <select required className="form-input w-full px-4 py-3 rounded text-sm" value={form.assunto} onChange={set("assunto")}>
-                      <option value="" disabled>Selecione...</option>
+                    <label className="text-xs mb-1.5 block" style={{ color: B.silver }} for="assunto">Assunto *</label>
+                    <select required id="assunto" className="form-input w-full px-4 py-3 rounded text-sm" value={form.assunto} onChange={set("assunto")}>
+                      <option value="" disabled selected hidden>Selecione...</option>
                       <option>Exportação</option>
                       <option>Tradução</option>
                       <option>Importação</option>
@@ -960,6 +960,8 @@ function Contact() {
   );
 }
 
+
+
 /* ══════════════════════════════
    FOOTER
 ══════════════════════════════ */
@@ -993,6 +995,8 @@ function Footer() {
   );
 }
 
+
+
 /* ══════════════════════════════
    APP ROOT
 ══════════════════════════════ */
@@ -1006,6 +1010,8 @@ export default function App() {
       <About />
       <Contact />
       <Footer />
+      <VLibras />
     </div>
   );
 }
+
