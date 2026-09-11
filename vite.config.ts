@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
+      adminRoute(),
       react(),
       tailwindcss(),
       figmaErrorOverlayReplay(),
@@ -41,6 +42,21 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
+
+// O Vite local não aplica os rewrites do vercel.json.
+function adminRoute(): Plugin {
+  const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
+    if (req.url && /^\/admin\/?(?:\?|$)/.test(req.url)) {
+      req.url = req.url.replace(/^\/admin\/?(?=\?|$)/, '/admin.html');
+    }
+    next();
+  };
+  return {
+    name: 'admin-route',
+    configureServer(server) { server.middlewares.use(rewrite); },
+    configurePreviewServer(server) { server.middlewares.use(rewrite); },
+  };
+}
 
 type FigmaSiteConfiguration = {
   title?: string

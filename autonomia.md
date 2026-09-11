@@ -1,49 +1,217 @@
 # Autonomia de atualização da landing page
 
-Requisitos de edição autônoma da landing page da Atlântica, atualizados conforme as decisões registradas na seção 2.
+Requisitos aprovados, funcionamento da edição e exemplos da API em um único documento. A implementação atual tem um formulário simples em `/admin`, gravação no Vercel Blob e prévia da foto para computador e celular.
 
-Base: página implementada em `src/App.jsx` e avaliação deste documento. Hoje, esses conteúdos estão no código; este levantamento define os requisitos e não implementa um painel de edição.
+## 1. Conteúdos editáveis e decisões aprovadas
 
-## 1. Principais conteúdos para atualização
-
-| Prioridade | Área | O que poderá ser alterado | Quando revisar | Regra definida |
-| --- | --- | --- | --- | --- |
-| Alta | Diretoria e equipe | Somente os nomes dos integrantes. | A cada troca de gestão ou integrante. | Cargos, áreas e ordem de apresentação permanecem fixos. |
-| Alta | Foto de Nossas Diretorias | Somente a foto da seção. | A cada nova gestão ou atualização da foto oficial. | Legenda e descrição alternativa permanecem fixas. Imagem atual: `src/image/Equipe_Diretoria.jpeg`. |
-| Alta | Contato | Somente o número de telefone/WhatsApp. | Sempre que o número de contato mudar. | E-mail fixo: `comercial@atlanticaconsultoria.com`. Remover o nome pessoal do contato e exibir apenas “Diretor Comercial”. Endereço e horário permanecem fixos. |
-
-## 2. Pontos já levantados para avaliar
-
-- [x] **Equipe:** permitir alterar somente os nomes.
-- [x] **Foto de Nossas Diretorias:** permitir substituir somente a foto.
-- [x] **Contato:** manter o e-mail fixo, permitir trocar o número de telefone/WhatsApp e retirar o nome pessoal, deixando apenas a identificação “Diretor Comercial”.
-
-## 3. Ajustes que precisam de implementação ou conferência
-
-- **Identificação do contato:** substituir “Huesley, Diretor Comercial” por “Diretor Comercial” na área de contato, mantendo o e-mail atual. Essa decisão se refere à identificação no contato; os nomes na seção de diretoria continuam sujeitos à edição prevista.
-- **Nomes da diretoria:** manter cargos, áreas e ordem ao atualizar os nomes. As iniciais exibidas nos cartões devem acompanhar o nome informado, sem exigir um campo de edição separado.
-- **Foto:** conferir o enquadramento no computador e no celular após a substituição, preservando a legenda e a descrição alternativa existentes.
-- **Telefone/WhatsApp:** conferir a apresentação do novo número após a atualização.
-
-## 4. Requisitos para implementação
-
-As caixas abaixo representam implementação pendente; as decisões de escopo já estão confirmadas na seção 2.
-
-- [ ] Permitir editar somente os nomes dos integrantes da diretoria, com atualização correspondente das iniciais exibidas.
-- [ ] Permitir substituir somente a foto de “Nossas Diretorias”.
-- [ ] Permitir editar somente o número de telefone/WhatsApp na área de contato.
-- [ ] Manter o e-mail comercial fixo.
-- [ ] Retirar o nome pessoal da identificação do contato e exibir “Diretor Comercial”.
-
-## 5. Registro das decisões
-
-| Conteúdo | Decisão | Prioridade |
+| Área | Pode alterar | Permanece fixo |
 | --- | --- | --- |
-| Nomes da diretoria | Permitir edição dos nomes. | Alta |
-| Cargos, áreas e ordem da diretoria | Manter fixos. | — |
-| Foto de Nossas Diretorias | Permitir substituição da foto. | Alta |
-| Legenda e descrição alternativa da foto | Manter fixas. | — |
-| Telefone/WhatsApp | Permitir edição do número. | Alta |
-| E-mail comercial | Manter fixo. | — |
-| Identificação do contato | Exibir apenas “Diretor Comercial”, sem nome pessoal. | Alta |
-| Endereço e horário | Manter fixos. | — |
+| Diretoria | Somente os sete nomes. As iniciais acompanham os nomes automaticamente. | Cargos, áreas e ordem de apresentação. |
+| Nossas Diretorias | Somente a foto. | Legenda e descrição alternativa. |
+| Contato | Somente o telefone/WhatsApp. | E-mail `comercial@atlanticaconsultoria.com`, identificação “Diretor Comercial”, endereço e horário. |
+
+- [x] Edição dos nomes implementada.
+- [x] Troca da foto implementada, com prévia e opção de descartar antes de salvar.
+- [x] Edição do telefone implementada.
+- [x] E-mail fixo e identificação do contato sem nome pessoal.
+
+A foto original está em `public/diretoria-original.jpeg`. Os dados originais são usados enquanto a API carrega ou quando a leitura falha.
+
+## 2. Testar localmente
+
+Com o projeto vinculado e as variáveis de desenvolvimento disponíveis em `.env.local`, execute:
+
+```sh
+npx vercel dev
+```
+
+Abra o endereço mostrado no terminal e acrescente `/admin`. O formulário solicita a senha ao salvar. As Functions carregam `.env.local` no desenvolvimento; em Production e Preview, usam as variáveis do ambiente da Vercel.
+
+`npm run dev` abre somente o frontend, sem executar as APIs de leitura e gravação.
+
+Para executar os testes isolados, sem acessar o Blob:
+
+```sh
+node --test tests/content.test.js
+```
+
+Sete testes automatizados passaram. A leitura real pela API local também foi validada com resposta HTTP 200 e sete nomes. A gravação real ainda precisa da conferência final.
+
+## 3. API para a interface
+
+O fluxo é: carregar os dados, preencher o formulário e enviar os dados atualizados. Os exemplos abaixo são ilustrativos; use sempre a `revision` recebida da API.
+
+### Carregar os dados
+
+Envie `GET /api/content`, sem corpo e sem senha.
+
+Resposta `200` antes da primeira gravação:
+
+```json
+{
+  "names": [
+    "Yasmim Teixeira",
+    "Donato Mörschbächer",
+    "Luís Gustavo Brum",
+    "Huesley Padilha",
+    "Miguel Vigolo",
+    "Maria Isabela Gesswein",
+    "Bibiana Garcia"
+  ],
+  "phone": "(51) 99156-5793",
+  "photo": null,
+  "revision": ""
+}
+```
+
+`names` segue esta ordem fixa: Presidência, Vice-Presidência, Administrativo-Financeiro, Comercial, Gestão de Pessoas, Marketing e Projetos.
+
+`photo: null` indica a foto original. Depois de salvar uma imagem, `photo` contém o caminho dela no Blob. `revision` identifica a versão carregada e serve para evitar que uma pessoa sobrescreva a edição de outra.
+
+### Salvar nomes e telefone, mantendo a foto
+
+Envie `PUT /api/content` com estes cabeçalhos:
+
+```http
+Content-Type: application/json
+Authorization: Bearer SUA_SENHA
+```
+
+Corpo JSON de exemplo para a primeira gravação:
+
+```json
+{
+  "names": [
+    "Ana Silva",
+    "Donato Mörschbächer",
+    "Luís Gustavo Brum",
+    "Huesley Padilha",
+    "Miguel Vigolo",
+    "Maria Isabela Gesswein",
+    "Bibiana Garcia"
+  ],
+  "phone": "(51) 99999-0000",
+  "revision": "",
+  "photoData": null
+}
+```
+
+Envie sempre os sete nomes, o telefone e a revisão, mesmo que tenha alterado somente um campo. Cada nome aceita até 100 caracteres. A senha vai apenas no cabeçalho, não no JSON.
+
+Resposta `200` de exemplo:
+
+```json
+{
+  "names": [
+    "Ana Silva",
+    "Donato Mörschbächer",
+    "Luís Gustavo Brum",
+    "Huesley Padilha",
+    "Miguel Vigolo",
+    "Maria Isabela Gesswein",
+    "Bibiana Garcia"
+  ],
+  "phone": "(51) 99999-0000",
+  "photo": null,
+  "revision": "etag-retornado-pelo-blob"
+}
+```
+
+Guarde a nova `revision` para o próximo envio. Seu valor deve ser preservado exatamente como recebido, inclusive eventuais aspas dentro da string.
+
+### Salvar uma nova foto
+
+Use o mesmo `PUT`, substituindo `photoData: null` pelo conteúdo do arquivo convertido em data URL. Exemplo de corpo (o texto `BASE64_DO_ARQUIVO` deve ser substituído pelo conteúdo completo da imagem):
+
+```json
+{
+  "names": [
+    "Ana Silva",
+    "Donato Mörschbächer",
+    "Luís Gustavo Brum",
+    "Huesley Padilha",
+    "Miguel Vigolo",
+    "Maria Isabela Gesswein",
+    "Bibiana Garcia"
+  ],
+  "phone": "(51) 99999-0000",
+  "revision": "etag-retornado-pelo-blob",
+  "photoData": "data:image/jpeg;base64,BASE64_DO_ARQUIVO"
+}
+```
+
+Aceita JPEG, PNG ou WebP de até 2 MB. O navegador pode converter o arquivo com `FileReader.readAsDataURL(file)`, como já ocorre em `public/admin.js`. Omitir `photoData` ou enviar `null` mantém a foto atual.
+
+Resposta `200` de exemplo:
+
+```json
+{
+  "names": [
+    "Ana Silva",
+    "Donato Mörschbächer",
+    "Luís Gustavo Brum",
+    "Huesley Padilha",
+    "Miguel Vigolo",
+    "Maria Isabela Gesswein",
+    "Bibiana Garcia"
+  ],
+  "phone": "(51) 99999-0000",
+  "photo": "landing/photos/123e4567-e89b-42d3-a456-426614174000.jpeg",
+  "revision": "nova-etag-retornada-pelo-blob"
+}
+```
+
+Para exibir a foto retornada:
+
+```js
+const imageUrl = data.photo
+  ? `/api/photo?path=${encodeURIComponent(data.photo)}`
+  : '/diretoria-original.jpeg';
+```
+
+`GET /api/photo?path=...` retorna a imagem, não JSON. O caminho é gerado pelo servidor; não envie `photo` para tentar alterá-lo.
+
+### Quando ocorrer um erro
+
+A API de conteúdo retorna JSON com `error`. Exemplo de resposta `409`:
+
+```json
+{
+  "error": "Outra pessoa alterou os dados. Recarregue antes de salvar."
+}
+```
+
+| Status | O que fazer |
+| --- | --- |
+| `400` | Corrigir os campos ou o formato/tamanho da foto. |
+| `401` | Conferir a senha de edição. |
+| `405` | Usar o método correto: GET ou PUT. |
+| `409` | Carregar novamente os dados e reaplicar a alteração. |
+| `503` | Conferir o acesso ao armazenamento no servidor. |
+
+Só mostrar sucesso quando a API confirmar a gravação. Em caso de conflito, não sobrescrever automaticamente a revisão recebida.
+
+## 4. Limites atuais
+
+- O formulário é público; a escrita exige senha validada no servidor. Não há gestão de usuários, recuperação de senha ou sessão de login.
+- A senha não é salva em cookies nem no armazenamento do navegador.
+- A senha configurada em `ADMIN_PASSWORD` deve ter pelo menos 8 caracteres. Senha incorreta retorna `401`; configuração ausente ou menor que o mínimo retorna `503` com orientação específica.
+- Fotos anteriores permanecem no Blob. Um upload também pode ficar sem referência se a gravação posterior falhar.
+- A prévia reproduz o recorte e o degradê da foto; o enquadramento varia com a largura da tela.
+- O envio do formulário comercial não faz parte desta implementação.
+
+## 5. Pendências
+
+- [ ] Conferir o fluxo de gravação no Blob usado pelo ambiente atual: na verificação local de 10/09/2026, `/api/content` retornou HTTP 200 com `revision: ""` e `photo: null`, e a leitura direta confirmou que `landing/content.json` não existe nesse armazenamento. A integração da landing page já está implementada, mas a API está entregando os dados originais por ausência de conteúdo salvo. Verificar se o formulário confirma sucesso ao salvar e se administração e página usam o mesmo ambiente/Blob.
+- [ ] Após confirmar uma gravação, recarregar a landing page e comparar os campos com a resposta de `/api/content`. A página consulta a API ao abrir; uma aba já aberta não recebe alterações automaticamente. Falhas de leitura mantêm os dados originais sem aviso visível.
+- [ ] Finalizar o visual e a experiência de edição.
+- [ ] Melhorar as mensagens e a navegação do formulário.
+- [ ] Conferir visualmente nomes, telefone e recorte da foto em computador e celular.
+- [ ] Avaliar se é necessário adicionar orientação de recorte da foto.
+- [ ] Validar a gravação real, recarregar a página e confirmar a persistência no ambiente de teste.
+- [ ] Realizar a conferência final antes da publicação em produção.
+
+## Referências
+
+- [SDK do Vercel Blob](https://vercel.com/docs/vercel-blob/using-blob-sdk)
+- [Vercel Functions com Node.js](https://vercel.com/docs/functions/runtimes/node-js)

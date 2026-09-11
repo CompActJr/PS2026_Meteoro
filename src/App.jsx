@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import equipeDiretoria from "./image/Equipe_Diretoria.jpeg";
+const equipeDiretoria = '/diretoria-original.jpeg';
 import logoBranco from "./image/Logo Branco com Frase.png";
 import magaOficial from "./image/magá SEM FUNDO(3).png";
 import mapaMundi from "./image/mapa mundi com navio.png";
 import VLibras from './VLibras'
+import { DEFAULT_CONTENT, initials, validateContent } from '../shared/content.js';
 /* ── Brand tokens ── */
 const B = {
   navy: "#01113d",
@@ -28,25 +29,6 @@ function useReveal(threshold = 0.14) {
     return () => obs.disconnect();
   }, []);
   return { ref, visible };
-}
-
-/* ── Animated counter ── */
-function Counter({ target, suffix = "" }) {
-  const [val, setVal] = useState(0);
-  const { ref, visible } = useReveal(0.5);
-  useEffect(() => {
-    if (!visible) return;
-    const steps = 1800 / 16;
-    let cur = 0;
-    const inc = target / steps;
-    const t = setInterval(() => {
-      cur = Math.min(cur + inc, target);
-      setVal(Math.floor(cur));
-      if (cur >= target) clearInterval(t);
-    }, 16);
-    return () => clearInterval(t);
-  }, [visible, target]);
-  return <span ref={ref} className="stat-num">{val}{suffix}</span>;
 }
 
 /* ══════════════════════════════
@@ -674,7 +656,7 @@ function DiretoriaBlock({ d, index }) {
   );
 }
 
-function About() {
+function About({ content }) {
   const { ref, visible } = useReveal();
   const { ref: teamRef, visible: teamVis } = useReveal();
   return (
@@ -720,7 +702,11 @@ function About() {
             style={{ border: "1px solid rgba(252,163,17,0.2)", boxShadow: "0 18px 50px rgba(0,0,0,0.2)" }}
           >
             <img
-              src={equipeDiretoria}
+              src={content.photo ? `/api/photo?path=${encodeURIComponent(content.photo)}` : equipeDiretoria}
+              onError={event => {
+                const fallback = new URL(equipeDiretoria, window.location.href).href;
+                if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
+              }}
               alt="Equipe de diretoria da Atlântica Consultoria Internacional"
               className="absolute inset-0 w-full h-full object-cover imagem-diretoria"
             />
@@ -757,7 +743,7 @@ function About() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {DIRETORIAS.map((d, i) => <DiretoriaBlock key={d.name} d={d} index={i} />)}
+          {DIRETORIAS.map((d, i) => <DiretoriaBlock key={d.name} d={{ ...d, director: { ...d.director, name: content.names[i], initials: initials(content.names[i]) } }} index={i} />)}
         </div>
       </div>
     </section>
@@ -767,7 +753,7 @@ function About() {
 /* ══════════════════════════════
    CONTACT
 ══════════════════════════════ */
-function Contact() {
+function Contact({ phone }) {
   const { ref, visible } = useReveal();
   const [form, setForm] = useState({ nome: "", email: "", telefone: "", assunto: "", mensagem: "" });
   const [sent, setSent] = useState(false);
@@ -797,7 +783,7 @@ function Contact() {
             <div className="space-y-5">
               {[
                 { icon: "📍", label: "Endereço", val: "Avenida João Pessoa, 52, Porto Alegre, Rio Grande do Sul" },
-                { icon: "📞", label: "Telefone", val: "(51) 99156-5793" },
+                { icon: "📞", label: "Telefone", val: phone },
                 { icon: "✉️", label: "E-mail", val: "Diretor Comercial · comercial@atlanticaconsultoria.com" },
                 { icon: "🕐", label: "Horário", val: "Seg – Sex · 8h às 18h" },
               ].map(item => (
@@ -945,14 +931,23 @@ function Footer() {
    APP ROOT
 ══════════════════════════════ */
 export default function App() {
+  const [content, setContent] = useState(DEFAULT_CONTENT);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/content', { signal: controller.signal, cache: 'no-store' })
+      .then(response => { if (!response.ok) throw new Error('Conteúdo indisponível'); return response.json(); })
+      .then(data => setContent({ ...validateContent(data), photo: data.photo || null }))
+      .catch(() => { /* Mantém o conteúdo original se a API estiver indisponível. */ });
+    return () => controller.abort();
+  }, []);
   return (
     <div className="min-h-full">
       <Nav />
       <Hero />
       <Services />
       <Cases />
-      <About />
-      <Contact />
+      <About content={content} />
+      <Contact phone={content.phone} />
       <Footer />
       <VLibras />
     </div>
