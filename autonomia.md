@@ -202,8 +202,8 @@ Só mostrar sucesso quando a API confirmar a gravação. Em caso de conflito, n�
 
 ## 5. Pendências
 
-- [ ] Conferir o fluxo de gravação no Blob usado pelo ambiente atual: na verificação local de 10/09/2026, `/api/content` retornou HTTP 200 com `revision: ""` e `photo: null`, e a leitura direta confirmou que `landing/content.json` não existe nesse armazenamento. A integração da landing page já está implementada, mas a API está entregando os dados originais por ausência de conteúdo salvo. Verificar se o formulário confirma sucesso ao salvar e se administração e página usam o mesmo ambiente/Blob.
-- [ ] Após confirmar uma gravação, recarregar a landing page e comparar os campos com a resposta de `/api/content`. A página consulta a API ao abrir; uma aba já aberta não recebe alterações automaticamente. Falhas de leitura mantêm os dados originais sem aviso visível.
+- [ ] Confirmar que as alterações são salvas no Blob.
+- [ ] Recarregar o site e conferir se as alterações aparecem.
 - [ ] Finalizar o visual e a experiência de edição.
 - [ ] Melhorar as mensagens e a navegação do formulário.
 - [ ] Conferir visualmente nomes, telefone e recorte da foto em computador e celular.
