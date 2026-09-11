@@ -184,7 +184,7 @@ function Hero() {
             className="text-base leading-relaxed mb-10 max-w-lg"
             style={{ color: B.silver, animation: "fade-up 0.6s 0.2s ease both" }}
           >
-            Há 11 anos, a Atlântica auxilia empresas brasileiras em seu processo de internacionalização, promovendo a inserção estratégica e assertiva no mercado global.
+            Desde 2015, a Atlântica auxilia empresas brasileiras em seu processo de internacionalização, promovendo a inserção estratégica e assertiva no mercado global.
           </p>
           <div className="flex flex-wrap gap-4" style={{ animation: "fade-up 0.6s 0.3s ease both" }}>
             <a href="#contato" className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 rounded text-sm">
@@ -798,7 +798,7 @@ function Contact() {
               {[
                 { icon: "📍", label: "Endereço", val: "Avenida João Pessoa, 52, Porto Alegre, Rio Grande do Sul" },
                 { icon: "📞", label: "Telefone", val: "(51) 99156-5793" },
-                { icon: "✉️", label: "E-mail", val: "Huesley, Diretor Comercial · comercial@atlanticaconsultoria.com" },
+                { icon: "✉️", label: "E-mail", val: "Diretor Comercial · comercial@atlanticaconsultoria.com" },
                 { icon: "🕐", label: "Horário", val: "Seg – Sex · 8h às 18h" },
               ].map(item => (
                 <div key={item.label} className="flex items-start gap-3">
